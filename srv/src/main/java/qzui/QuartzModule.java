@@ -7,23 +7,48 @@ import restx.factory.AutoStartable;
 import restx.factory.Module;
 import restx.factory.Provides;
 
+import javax.inject.Named;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * Date: 18/2/14
  * Time: 21:14
  */
 @Module
 public class QuartzModule {
+
+
     @Provides
-    public Scheduler scheduler() {
+    @Named("qzui.properties")
+    public Properties quartzProperties() {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("qzui.properties");
+        Properties prop = new Properties();
         try {
-            return StdSchedulerFactory.getDefaultScheduler();
-        } catch (SchedulerException e) {
+            prop.load(is);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return prop;
     }
 
     @Provides
-    public AutoStartable schedulerStarter(final Scheduler scheduler) {
+    @Named("qzui.dataSource")
+    public String dataSource(@Named("qzui.properties") Properties quartzProperties) {
+        return quartzProperties.getProperty("org.quartz.jobStore.dataSource");
+    }
+
+    @Provides
+    public Scheduler scheduler(@Named("qzui.properties") Properties quartzProperties) throws SchedulerException {
+        StdSchedulerFactory sf = new StdSchedulerFactory();
+        sf.initialize(quartzProperties);
+        return sf.getScheduler();
+
+    }
+
+    @Provides
+    public AutoStartable schedulerStarter(Scheduler scheduler) {
         return new AutoStartable() {
             @Override
             public void start() {
@@ -37,7 +62,7 @@ public class QuartzModule {
     }
 
     @Provides
-    public AutoCloseable schedulerCloser(final Scheduler scheduler) {
+    public AutoCloseable schedulerCloser(Scheduler scheduler) {
         return new AutoCloseable() {
             @Override
             public void close() throws Exception {

@@ -3,18 +3,18 @@ package qzui;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
-import restx.security.*;
 import restx.factory.Module;
 import restx.factory.Provides;
-import javax.inject.Named;
+import restx.security.*;
 
+import javax.inject.Named;
 import java.nio.file.Paths;
 
 @Module
 public class AppModule {
     @Provides
     public SignatureKey signatureKey() {
-         return new SignatureKey("5621d6b0-c047-4420-a59d-412a252de015 quartz-ui 5399913187595030480 quartz-ui".getBytes(Charsets.UTF_8));
+        return new SignatureKey("5621d6b0-c047-4420-a59d-412a252de015 quartz-ui 5399913187595030480 quartz-ui".getBytes(Charsets.UTF_8));
     }
 
     @Provides
@@ -25,7 +25,7 @@ public class AppModule {
 
     @Provides
     @Named("app.name")
-    public String appName(){
+    public String appName() {
         return "quartz-ui";
     }
 

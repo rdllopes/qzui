@@ -3,3 +3,10 @@ logs
 *.iml
 target
 ui/dist
+srv/gradlew
+srv/gradlew.bat
+*/.*
+srv/payload*.*
+srv/out/
+srv/gradle/
+srv/src/main/generated/

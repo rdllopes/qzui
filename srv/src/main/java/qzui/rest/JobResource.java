@@ -1,10 +1,11 @@
 package qzui.rest;
 
-import com.google.common.base.Optional;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import qzui.domain.JobDefinition;
 import qzui.domain.JobDescriptor;
+import qzui.domain.TriggerHistory;
+import qzui.domain.TriggerHistoryRepository;
 import restx.annotations.DELETE;
 import restx.annotations.GET;
 import restx.annotations.POST;
@@ -12,6 +13,8 @@ import restx.annotations.RestxResource;
 import restx.factory.Component;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -23,10 +26,12 @@ import java.util.Set;
 public class JobResource {
     private final Scheduler scheduler;
     private final Collection<JobDefinition> definitions;
+    private final TriggerHistoryRepository triggerHistoryRepository;
 
-    public JobResource(Scheduler scheduler, Collection<JobDefinition> definitions) {
+    public JobResource(Scheduler scheduler, Collection<JobDefinition> definitions, TriggerHistoryRepository triggerHistoryRepository) {
         this.scheduler = scheduler;
         this.definitions = definitions;
+        this.triggerHistoryRepository = triggerHistoryRepository;
     }
 
     /*
@@ -34,7 +39,7 @@ public class JobResource {
 
         {"type":"log", "name":"test2", "group":"log", "triggers": [{"cron":"0/2 * * * * ?"}]}
 
-        {"type":"http", "name":"google-humans", "method":"GET", "url":"http://www.google.com/humans.txt", "triggers": [{"when":"now"}]}
+        {"type":"http", "name":"google-humans", "method":"GET", "url":"http://127.0.0.1:8080/api/@/ui/", "triggers": [{"when":"now"}]}
      */
     @POST("/groups/{group}/jobs")
     public JobDescriptor addJob(String group, JobDescriptor jobDescriptor) {
@@ -43,9 +48,9 @@ public class JobResource {
             Set<Trigger> triggers = jobDescriptor.buildTriggers();
             JobDetail jobDetail = jobDescriptor.buildJobDetail();
             if (triggers.isEmpty()) {
-                scheduler.addJob(jobDetail, false);
+                this.scheduler.addJob(jobDetail, false);
             } else {
-                scheduler.scheduleJob(jobDetail, triggers, false);
+                this.scheduler.scheduleJob(jobDetail, triggers, false);
             }
             return jobDescriptor;
         } catch (SchedulerException e) {
@@ -53,19 +58,24 @@ public class JobResource {
         }
     }
 
+    @GET("/groups/{group}/jobs/{name}/history")
+    public List<TriggerHistory> getListTriggerHistory(String group, String name) {
+        return this.triggerHistoryRepository.findAll(group, name);
+    }
+
     @GET("/jobs")
-    public Set<JobKey> getJobKeys()  {
+    public Set<JobKey> getJobKeys() {
         try {
-            return scheduler.getJobKeys(GroupMatcher.anyJobGroup());
+            return this.scheduler.getJobKeys(GroupMatcher.anyJobGroup());
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
     }
 
     @GET("/groups/{group}/jobs")
-    public Set<JobKey> getJobKeysByGroup(String group)  {
+    public Set<JobKey> getJobKeysByGroup(String group) {
         try {
-            return scheduler.getJobKeys(GroupMatcher.jobGroupEquals(group));
+            return this.scheduler.getJobKeys(GroupMatcher.jobGroupEquals(group));
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
@@ -74,21 +84,21 @@ public class JobResource {
     @GET("/groups/{group}/jobs/{name}")
     public Optional<JobDescriptor> getJob(String group, String name) {
         try {
-            JobDetail jobDetail = scheduler.getJobDetail(new JobKey(name, group));
+            JobDetail jobDetail = this.scheduler.getJobDetail(new JobKey(name, group));
 
             if (jobDetail == null) {
-                return Optional.absent();
+                return Optional.empty();
             }
 
-            for (JobDefinition definition : definitions) {
+            for (JobDefinition definition : this.definitions) {
                 if (definition.acceptJobClass(jobDetail.getJobClass())) {
                     return Optional.of(definition.buildDescriptor(
-                            jobDetail, scheduler.getTriggersOfJob(jobDetail.getKey())));
+                            jobDetail, this.scheduler.getTriggersOfJob(jobDetail.getKey())));
                 }
             }
 
             throw new IllegalStateException("can't find job definition for " + jobDetail
-                    + " - available job definitions: " + definitions);
+                    + " - available job definitions: " + this.definitions);
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
@@ -97,7 +107,7 @@ public class JobResource {
     @DELETE("/groups/{group}/jobs/{name}")
     public void deleteJob(String group, String name) {
         try {
-            scheduler.deleteJob(new JobKey(name, group));
+            this.scheduler.deleteJob(new JobKey(name, group));
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }

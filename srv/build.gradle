@@ -1,0 +1,31 @@
+apply plugin: 'java'
+
+group = 'quartz-ui'
+version = '0.1-SNAPSHOT'
+
+description = """quartz-ui"""
+
+repositories {
+    maven { url "http://repo.maven.apache.org/maven2" }
+}
+dependencies {
+
+    compile group: 'com.h2database', name: 'h2', version: '1.4.197'
+
+    compile group: 'io.restx', name: 'restx-core', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-security-basic', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-core-annotation-processor', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-factory', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-barbarywatch', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-factory-admin', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-monitor-admin', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-server-jetty', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-apidocs', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-specs-admin', version: '0.31.1'
+    compile group: 'io.restx', name: 'restx-admin', version: '0.31.1'
+    compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.2.1'
+    compile group: 'com.github.kevinsawicki', name: 'http-request', version: '5.5'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.0.13'
+    testCompile group: 'io.restx', name: 'restx-specs-tests', version: '0.31.1'
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
